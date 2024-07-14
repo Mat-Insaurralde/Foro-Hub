@@ -8,12 +8,14 @@ import com.lastByte.Foro.Hub.domain.topico.validaciones.CursosCorrespondientes;
 import com.lastByte.Foro.Hub.domain.usuario.Usuario;
 import com.lastByte.Foro.Hub.domain.usuario.UsuarioRepository;
 import com.lastByte.Foro.Hub.domain.usuario.UsuarioService;
+import com.lastByte.Foro.Hub.infra.excepciones.ResourceNotFoundException;
 import com.lastByte.Foro.Hub.infra.excepciones.ValidacionDeIntegridad;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 public class TopicoService {
@@ -66,8 +68,6 @@ public class TopicoService {
 
 
         //VALIDAMOS QUE AL MENOS UN CURSO INGRESADO EXISTA
-
-
         List<Curso> cursos = cursosCorrespondientes.validar(registroTopicoDTO.cursos());
 
 
@@ -91,13 +91,97 @@ public class TopicoService {
 
 
     public DetalleTopicoDTO buscarTopicoPorid(Long id) {
+
+        if (id == null) {
+            throw new ValidationException("No se ah ingresado un ID!");
+        }
+
         var topico = topicoRepository.findById(id);
 
-        if (topico.isEmpty()) throw new ValidationException("Topico no encontrado!");
+        if (topico.isEmpty()) throw new ResourceNotFoundException("Topico no encontrado con el ID proporcionado");
 
         var cursos = cursoRepository.findCursosByTopicoId(topico.get().getId());
 
         return new DetalleTopicoDTO(topico.get(), cursos);
+    }
+
+
+    public DetalleTopicoDTO actualizarTopicoPorId(Long id, ActualizarTopicoDTO actualizarTopicoDTO) {
+
+        if (id == null) {
+            throw new ValidationException("No se ah ingresado un ID!");
+        }
+
+        Optional<Topico> opTopico = topicoRepository.findById(id);
+
+        if (opTopico.isEmpty()) {
+            throw new ResourceNotFoundException("Topico no encontrado con el ID proporcionado");
+        }
+
+        List<Curso> cursosTopico = cursoRepository.findCursosByTopicoId(id);
+
+        var topico = opTopico.get();
+
+        List<Curso> cursosNuevos = new ArrayList<>();
+
+
+        if (!actualizarTopicoDTO.cursos().isEmpty()) {
+            //VALIDAMOS QUE AL MENOS UN CURSO INGRESADO EXISTA
+            //VERIFICA LOS CURSOS Y LOS TRAE
+            cursosNuevos = cursosCorrespondientes.validar(actualizarTopicoDTO.cursos());
+
+            ///VALIDAMOS QUE LOS CURSOS SEAN DISTINTOS
+
+            if (!contienenLosMismosCursos(cursosTopico, cursosNuevos)) {
+
+                ///ELIMINAMOS LAS REFERENCIAS DE CURSOS AL TOPICO
+                topicoRepository.eliminarCursosDelTopico(id);
+                //REGISTRAMOS LOS NUEVOS CURSOS DEL TOPICO
+                for (Curso curso : cursosNuevos) {
+                    topicoRepository.registrarCursoDelTopico(id, curso.getId());
+                }
+
+            }
+        }
+
+        topico.actualizarDatos(actualizarTopicoDTO);
+
+        topicoRepository.save(topico);
+
+        return new DetalleTopicoDTO(topico, cursosNuevos);
+    }
+
+
+    public String eliminarTopicoPorId(Long id) {
+
+        if (!topicoRepository.existsById(id)){
+            throw new ResourceNotFoundException("Topico no encontrado con el ID proporcionado");
+        }
+        topicoRepository.deleteById(id);
+
+        ///ELIMINAMOS LAS REFERENCIAS DE CURSOS AL TOPICO
+        topicoRepository.eliminarCursosDelTopico(id);
+
+        return "Topico eliminado con exito!";
+    }
+
+
+
+
+
+
+
+
+    public static boolean contienenLosMismosCursos(List<Curso> cursosTopico, List<Curso> cursosNuevos) {
+
+        cursosTopico.sort(Comparator.comparing(Curso::getNombre));
+        cursosNuevos.sort(Comparator.comparing(Curso::getNombre));
+
+        if (cursosTopico.equals(cursosNuevos)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
 

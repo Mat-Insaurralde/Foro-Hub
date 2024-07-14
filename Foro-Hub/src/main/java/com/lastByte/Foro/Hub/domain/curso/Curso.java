@@ -37,5 +37,15 @@ public class Curso {
         this.fechaDeCreacion= LocalDateTime.now();
         this.status=true;
     }
+
+
+    public void desactivarCurso() {
+        this.status=false;
+    }
+
+
+
+
+
 }
 

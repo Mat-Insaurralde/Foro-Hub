@@ -1,7 +1,8 @@
 package com.lastByte.Foro.Hub.infra.errores;
 
-import com.auth0.jwt.exceptions.JWTVerificationException;
+
 import com.lastByte.Foro.Hub.infra.excepciones.CollectionEmptyException;
+import com.lastByte.Foro.Hub.infra.excepciones.ResourceNotFoundException;
 import com.lastByte.Foro.Hub.infra.excepciones.TokenVerificationException;
 import com.lastByte.Foro.Hub.infra.excepciones.ValidacionDeIntegridad;
 import jakarta.validation.ValidationException;
@@ -44,7 +45,11 @@ public class TratadorDeErrores {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
 
-
+    //RESPONSE RECURSO NO ENCONTRADO
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 
 
 }

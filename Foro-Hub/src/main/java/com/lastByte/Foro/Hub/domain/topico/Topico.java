@@ -2,6 +2,7 @@ package com.lastByte.Foro.Hub.domain.topico;
 
 
 //import com.lastByte.Foro.Hub.domain.curso.Curso;
+
 import com.lastByte.Foro.Hub.domain.curso.Curso;
 import com.lastByte.Foro.Hub.domain.usuario.Usuario;
 import jakarta.persistence.*;
@@ -29,7 +30,7 @@ public class Topico {
     private String mensaje;
     @Column(name = "fecha_de_creacion")
     private LocalDateTime fechaDeCreacion;
-    private boolean status ;
+    private boolean status;
 
     @Setter
     @ManyToOne
@@ -40,13 +41,26 @@ public class Topico {
     //No mapeo los cursos porque usare una tabla intermedia
 
 
-
     public Topico(RegistroTopicoDTO registroTopicoDTO) {
         this.titulo = registroTopicoDTO.titulo();
         this.mensaje = registroTopicoDTO.mensaje();
         this.fechaDeCreacion = LocalDateTime.now();
-        this.status=true;
+        this.status = true;
 
+    }
+
+    public void actualizarDatos(ActualizarTopicoDTO datos) {
+        if (datos.titulo() != null) {
+            this.titulo = datos.titulo();
+        }
+
+        if (datos.mensaje() != null) {
+            this.mensaje = datos.mensaje();
+        }
+    }
+
+    public void desactivarTopico() {
+        this.status=false;
     }
 
 
@@ -56,6 +70,8 @@ public class Topico {
                "Titulo: " + titulo + '\'' +
                "Mensaje: " + mensaje + '\'' +
                "Fecha De Creacion: " + fechaDeCreacion +
-               "Autor: " + autor.getEmail() ;
+               "Autor: " + autor.getEmail();
     }
+
+
 }
