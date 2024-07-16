@@ -3,9 +3,9 @@ package com.lastByte.Foro.Hub.domain.curso;
 import jakarta.validation.constraints.NotBlank;
 
 public record RegistroCursoDTO(
-        @NotBlank
+        @NotBlank(message = "El nombre del curso es obligatorio")
         String nombre,
-        @NotBlank
+        @NotBlank(message = "La descripcion del curso es obligatoria")
         String descripcion
 ) {
 }

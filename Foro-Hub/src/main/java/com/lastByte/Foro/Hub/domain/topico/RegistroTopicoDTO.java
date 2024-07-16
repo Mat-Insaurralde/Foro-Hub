@@ -10,13 +10,13 @@ import java.util.List;
 
 public record RegistroTopicoDTO(
 
-@NotBlank
+@NotBlank(message = "El titulo del topico es obligatorio")
 String titulo,
 
-@NotBlank
+@NotBlank(message = "El mensaje del topico es obligatorio")
 String mensaje,
 
-@NotEmpty
+@NotEmpty(message = "Los cursos del topico son obligatorios")
 List<String> cursos
 
 

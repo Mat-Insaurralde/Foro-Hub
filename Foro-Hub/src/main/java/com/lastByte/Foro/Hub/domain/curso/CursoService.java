@@ -47,7 +47,7 @@ public class CursoService {
     }
 
 
-    public List<DetalleCursoDTO> listarTodosLosCursos() {
+    public List<DetalleCursoDTO> listadoCursos() {
         var cursos = cursoRepository.findAll();
 
         if (cursos.isEmpty()) {

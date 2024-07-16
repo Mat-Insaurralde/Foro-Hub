@@ -2,9 +2,13 @@ package com.lastByte.Foro.Hub.domain.topico;
 
 
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+
+import java.util.Optional;
 
 public interface TopicoRepository  extends JpaRepository<Topico,Long> {
 
@@ -23,6 +27,21 @@ public interface TopicoRepository  extends JpaRepository<Topico,Long> {
 
 
     boolean existsByTituloAndMensajeIgnoreCase(String titulo, String mensaje);
+
+
+    Page<Topico> findByOrderByFechaDeCreacionAsc(Pageable paginacion);
+
+
+
+    @Query( value = """  
+                        SELECT t.* 
+                        FROM topico_cursos tc
+                        JOIN cursos c ON tc.curso_id = c.id
+                        JOIN topicos t ON tc.topico_id = t.id
+                        WHERE c.nombre = :nombre
+                        AND YEAR(t.fecha_de_creacion) = :anio ;"""  ,  nativeQuery = true)
+    Page<Topico> findByCursosPorNombreYanio( String nombre , Integer anio, Pageable paginacion );
+
 
 
 }

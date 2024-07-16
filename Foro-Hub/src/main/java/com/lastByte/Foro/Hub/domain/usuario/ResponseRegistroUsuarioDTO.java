@@ -4,6 +4,5 @@ public record ResponseRegistroUsuarioDTO(
         String message,
         String token
 
-
 ) {
 }

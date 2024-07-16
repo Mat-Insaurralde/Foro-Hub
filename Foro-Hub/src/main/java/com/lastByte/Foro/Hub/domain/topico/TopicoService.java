@@ -1,6 +1,5 @@
 package com.lastByte.Foro.Hub.domain.topico;
 
-import com.lastByte.Foro.Hub.controller.ResponseStandarDTO;
 import com.lastByte.Foro.Hub.domain.curso.Curso;
 import com.lastByte.Foro.Hub.domain.curso.CursoRepository;
 import com.lastByte.Foro.Hub.domain.curso.CursoService;
@@ -8,14 +7,18 @@ import com.lastByte.Foro.Hub.domain.topico.validaciones.CursosCorrespondientes;
 import com.lastByte.Foro.Hub.domain.usuario.Usuario;
 import com.lastByte.Foro.Hub.domain.usuario.UsuarioRepository;
 import com.lastByte.Foro.Hub.domain.usuario.UsuarioService;
+import com.lastByte.Foro.Hub.infra.excepciones.CollectionEmptyException;
 import com.lastByte.Foro.Hub.infra.excepciones.ResourceNotFoundException;
 import com.lastByte.Foro.Hub.infra.excepciones.ValidacionDeIntegridad;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TopicoService {
@@ -118,9 +121,15 @@ public class TopicoService {
             throw new ResourceNotFoundException("Topico no encontrado con el ID proporcionado");
         }
 
+        //VERIFICAR QUE EL TITULO Y MENSAJE NO SEA DUPLICADO
+        if (topicoRepository.existsByTituloAndMensajeIgnoreCase(actualizarTopicoDTO.titulo(),actualizarTopicoDTO.mensaje())) {
+            throw new ValidacionDeIntegridad("Ya existe un topico con el mismo titulo y mensaje");
+        }
+
         List<Curso> cursosTopico = cursoRepository.findCursosByTopicoId(id);
 
         var topico = opTopico.get();
+
 
         List<Curso> cursosNuevos = new ArrayList<>();
 
@@ -165,8 +174,39 @@ public class TopicoService {
         return "Topico eliminado con exito!";
     }
 
+    public List<DetalleTopicoDTO> buscarTodosLosTopicos() {
+
+        var topicos = topicoRepository.findAll();
+
+        if (topicos.isEmpty()) {
+            throw new CollectionEmptyException("No hay topicos registrados!");
+        }
+
+        var listaTopicos = topicos.stream()
+                .map(topico -> {
+                    return new DetalleTopicoDTO(topico,cursoRepository.findCursosByTopicoId(topico.getId()));})
+                .collect(Collectors.toList());
+
+        return listaTopicos;
+
+    }
 
 
+    public Page<DetalleTopicoDTO> buscarTop10TopicosPorFechaCreacionASC(Pageable paginacion) {
+         var lista = topicoRepository.findByOrderByFechaDeCreacionAsc(paginacion)
+                 .map(t -> {return new DetalleTopicoDTO(t,cursoRepository.findCursosByTopicoId(t.getId()));});
+         if (lista.isEmpty()){ throw new CollectionEmptyException("No hay topicos registrados!");}
+         return lista;
+    }
+
+
+    public Page<DetalleTopicoDTO> buscarTopicosPorNombreYAnio(Pageable paginacion, RequestTopicoAnioYfechaDTO datosRequest) {
+        var lista = topicoRepository.findByCursosPorNombreYanio(datosRequest.nombreDecurso(), datosRequest.anio() ,paginacion)
+                .map(t -> {return new DetalleTopicoDTO(t,cursoRepository.findCursosByTopicoId(t.getId()));});
+
+       if (lista.isEmpty()){ throw new CollectionEmptyException("No hay topicos registrados con esos criterios de busqueda!");}
+        return lista;
+    }
 
 
 
@@ -183,6 +223,7 @@ public class TopicoService {
             return false;
         }
     }
+
 
 
 }

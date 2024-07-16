@@ -5,6 +5,8 @@ import com.lastByte.Foro.Hub.domain.curso.CursoService;
 import com.lastByte.Foro.Hub.domain.curso.DetalleCursoDTO;
 import com.lastByte.Foro.Hub.domain.curso.RegistroCursoDTO;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/cursos")
+@Tag(name = "Curso", description = "Endpoints para la gestión de cursos")
 public class CursoController {
 
 
@@ -26,6 +29,11 @@ public class CursoController {
    //REGISTRAR CURSO
     @PostMapping
     @Transactional
+    @Operation(
+            summary = "Registrar un nuevo curso",
+            description = "Este endpoint permite registrar un nuevo curso en el sistema.",
+            tags = {"Curso"}
+    )
     public ResponseEntity<DetalleCursoDTO> registrarCurso(@RequestBody RegistroCursoDTO registroCursoDTO){
         var response = cursoService.registrarCurso(registroCursoDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(response) ;
@@ -34,6 +42,11 @@ public class CursoController {
    //DELETE REAL
     @DeleteMapping("/{id}")
     @Transactional
+    @Operation(
+            summary = "Eliminar un curso",
+            description = "Este endpoint permite eliminar un curso del sistema mediante su ID.",
+            tags = {"Curso"}
+    )
     public ResponseEntity<String> eliminarCurso(@PathVariable Long id){
         var response = cursoService.eliminarCurso(id);
         return ResponseEntity.status(HttpStatus.OK).body(response) ;
@@ -42,7 +55,12 @@ public class CursoController {
 
     ///LISTA DETALLE DEL CURSO POR ID
    @GetMapping("/{id}")
-    public  ResponseEntity<DetalleCursoDTO> listarCursoPorId(@PathVariable Long id){
+   @Operation(
+           summary = "Buscar un curso por ID",
+           description = "Este endpoint permite obtener los detalles de un curso específico mediante su ID.",
+           tags = {"Curso"}
+   )
+    public  ResponseEntity<DetalleCursoDTO> buscarCursoPorId(@PathVariable Long id){
         var response = cursoService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
    }
@@ -50,8 +68,13 @@ public class CursoController {
 
    //LISTA DETALLE DE TODOS LOS CURSOS
     @GetMapping()
-    public  ResponseEntity listarTodosLosCursos(){
-        var response = cursoService.listarTodosLosCursos();
+    @Operation(
+            summary = "Listar todos los cursos",
+            description = "Este endpoint permite listar todos los cursos registrados en el sistema.",
+            tags = {"Curso"}
+    )
+    public  ResponseEntity listadoCursos(){
+        var response = cursoService.listadoCursos();
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
