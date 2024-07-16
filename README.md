@@ -49,12 +49,12 @@ Foro Hub Proporciona endpoints para registrar, actualizar, eliminar y buscar cur
 
 ## :camera_flash: Screenshots del projecto
 <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-<img alt="Imagen carpeta topico" height="300px" src="/static/Screenshots/topico.JPG" width="300px"/>
-<img alt="Imagen carpeta curso" height="300px" src="/static/Screenshots/curso.JPG" width="300px"/>
-<img alt="Imagen carpeta controladores" height="300px" src="/static/Screenshots/controladores.JPG" width="300px"/>
-<img alt="Imagen muestra de una autenticacion" height="300px" src="/static/Screenshots/autenticacion.JPG" width="300px"/>
-<img alt="Imagen lista topico por fecha" height="300px" src="/static/Screenshots/topicos%20por%20fecha.JPG" width="300px"/>
-<img alt="Imagen lista todos los topicos" height="300px" src="/static/Screenshots/Captura.JPG" width="300px"/>
+<img alt="Imagen carpeta topico" height="300px" src="Foro-Hub/src/main/resources/static/Screenshots/topico.JPG" width="300px"/>
+<img alt="Imagen carpeta curso" height="300px" src="Foro-Hub/src/main/resources/static/Screenshots/curso.JPG" width="300px"/>
+<img alt="Imagen carpeta controladores" height="300px" src="Foro-Hub/src/main/resources/static/Screenshots/controladores.JPG" width="300px"/>
+<img alt="Imagen muestra de una autenticacion" height="300px" src="Foro-Hub/src/main/resources/static/Screenshots/autenticacion.JPG" width="300px"/>
+<img alt="Imagen lista topico por fecha" height="300px" src="Foro-Hub/src/main/resources/static/Screenshots/topicos%20por%20fecha.JPG" width="300px"/>
+<img alt="Imagen lista todos los topicos" height="300px" src="Foro-Hub/src/main/resources/static/Screenshots/Captura.JPG" width="300px"/>
 </div>
 
 
