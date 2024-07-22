@@ -1,8 +1,8 @@
-package com.lastByte.Foro.Hub.domain.usuario;
+package com.lastByte.Foro.Hub.controller.dto;
 
 import jakarta.validation.constraints.NotNull;
 
-public record loginUsuarioDTO(
+public record AuthLoginRequest(
         @NotNull
         String username,
         @NotNull

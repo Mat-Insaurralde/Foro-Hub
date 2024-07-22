@@ -1,7 +1,9 @@
 package com.lastByte.Foro.Hub.domain.usuario;
 
 
+import com.lastByte.Foro.Hub.controller.dto.AuthRegisterUserRequest;
 import com.lastByte.Foro.Hub.domain.topico.Topico;
+import com.lastByte.Foro.Hub.domain.usuario.Roles.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -11,8 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 @Table(name = "usuarios")
 @Entity(name = "usuario")
@@ -28,34 +29,64 @@ public class Usuario implements UserDetails {
 
     private String nombre;
     private String email;
+
+    @Column(unique = true)
     private String username;
     private String password;
 
-    private Boolean status;
+    @Column(name = "is_enabled")
+    private Boolean isEnabled;
+    @Column(name = "account_No_Expired")
+    private Boolean accountNoExpired;
+    @Column(name = "account_No_Locked")
+    private Boolean accountNoLocked;
+    @Column(name = "credentials_No_Expired")
+    private Boolean credentialsNoExpired;
+
+    @ManyToMany(fetch = FetchType.EAGER , cascade = CascadeType.ALL)//Carga todo de una vez //guarda los roles cuando guardamos el user
+    @JoinTable(name = "usuario_roles" , joinColumns = @JoinColumn(name = "usuario_id") , inverseJoinColumns = @JoinColumn(name = "role_id"))
+    private Set<Role>  roles = new HashSet<>();
+
 
     @OneToMany(mappedBy = "autor")
     private List<Topico> topicos;
 
 
-    public Usuario(RequestRegistroUsuarioDTO registroUsuarioDTO, String password) {
+    public Usuario(Set<Role> rolesSet, AuthRegisterUserRequest registroUsuarioDTO, String password) {
         this.nombre= registroUsuarioDTO.nombre();
         this.email=registroUsuarioDTO.email();
         this.username=registroUsuarioDTO.username();
         this.password=password;
-        this.status=true;
+        this.isEnabled=true;
+        this.accountNoLocked=true;
+        this.accountNoExpired=true;
+        this.credentialsNoExpired=true;
+        this.roles=rolesSet;
     }
 
 
     public void desactivarUsuario() {
-        this.status=false;
+        this.isEnabled=false;
     }
 
 
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+   List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+        //Traemos los roles
+        getRoles()
+                .forEach(role -> authorities.add(new SimpleGrantedAuthority("ROLE_".concat(role.getRoleEnum().name()))));
+        //Traemos los permisos
+        getRoles().stream()
+                .flatMap(role -> role.getPermisos().stream())
+                .forEach(permission -> authorities.add(new SimpleGrantedAuthority(permission.getNombre().name())));
+
+        return authorities;
     }
+
+
 
     @Override
     public String getPassword() {
@@ -68,6 +99,25 @@ public class Usuario implements UserDetails {
     }
 
 
+    @Override
+    public boolean isAccountNonLocked() {
+        return accountNoLocked;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return  accountNoExpired;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return credentialsNoExpired;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isEnabled;
+    }
 
 
 }

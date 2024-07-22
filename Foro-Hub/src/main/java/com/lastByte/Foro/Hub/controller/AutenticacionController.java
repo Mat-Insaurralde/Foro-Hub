@@ -1,13 +1,17 @@
 package com.lastByte.Foro.Hub.controller;
 
 
-import com.lastByte.Foro.Hub.domain.usuario.RequestRegistroUsuarioDTO;
+import com.lastByte.Foro.Hub.Utils.JwtUtils;
+import com.lastByte.Foro.Hub.controller.dto.AuthResponse;
+import com.lastByte.Foro.Hub.controller.dto.AuthRegisterUserRequest;
 import com.lastByte.Foro.Hub.domain.usuario.UsuarioService;
-import com.lastByte.Foro.Hub.domain.usuario.loginUsuarioDTO;
-import com.lastByte.Foro.Hub.infra.security.AutenticationService;
+import com.lastByte.Foro.Hub.controller.dto.AuthLoginRequest;
+import com.lastByte.Foro.Hub.infra.security.UserDetailsServiceImpl;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,19 +25,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@RequestMapping()
+@RequestMapping("/auth")
 @Tag(name = "Autentiacion", description = "Endpoints para el inicio de sesion o registro del usuario")
 public class AutenticacionController {
 
 
     @Autowired
-    private AuthenticationManager authM;
+    private UserDetailsServiceImpl userDetailsServiceImpl;
 
     @Autowired
-    private UsuarioService usuarioService;
+    private JwtUtils jwtUtils;
 
-    @Autowired
-    private AutenticationService autenticationService;
 
 
     @PostMapping("/login")
@@ -45,14 +47,14 @@ public class AutenticacionController {
                           El token se debe incluir en los encabezados de las solicitudes subsecuentes para acceder a los endpoints protegidos.""",
             tags = {}
     )
-    public ResponseEntity loginUsuario(@RequestBody @Valid loginUsuarioDTO loginUsuarioDTO ) {
-    // Va a checkear que el usuario exista comparar las contraseñas
-    var usuario = usuarioService.validacionUsernameYPassword(loginUsuarioDTO);
+    public ResponseEntity<AuthResponse> login(@RequestBody @Valid AuthLoginRequest datosLogin, HttpServletResponse response) {
 
-    var authUsuario = autenticationService.autenticarYGenerarToken(loginUsuarioDTO.username(), loginUsuarioDTO.password(), authM );
+        AuthResponse authResponse = this.userDetailsServiceImpl.login(datosLogin);
 
-    return  ResponseEntity.status(HttpStatus.OK).body(authUsuario);
+        setCookieToken(this.userDetailsServiceImpl.createToken(datosLogin.username(), datosLogin.password())
+                , response );
 
+        return  ResponseEntity.status(HttpStatus.OK).body(authResponse);
     }
 
 
@@ -63,20 +65,49 @@ public class AutenticacionController {
     @Operation(
             summary = "Registra un nuevo usuario , obtiene la autenticacion y token para el usuario",
             description = """
-                    Este endpoint permite registrar un nuevo usuario en el sistema. 
+                    Este endpoint permite registrar un nuevo usuario en el sistema.
                     Al registrarse, el usuario recibe un token JWT que le da acceso a los endpoints protegidos.
                     """,
             tags = {}
     )
-    public ResponseEntity registrarUsuario(@RequestBody @Valid RequestRegistroUsuarioDTO registroUsuarioDTO ) {
+    public ResponseEntity register(@RequestBody @Valid AuthRegisterUserRequest datosRegister , HttpServletResponse response ) {
 
-        var response = usuarioService.registrarUsuario(registroUsuarioDTO);
+        AuthResponse authResponse = this.userDetailsServiceImpl.registerUser(datosRegister);
 
-        var authUsuario = autenticationService.autenticarYGenerarToken(registroUsuarioDTO.username(),registroUsuarioDTO.password(), authM );
+         setCookieToken(this.userDetailsServiceImpl.createToken(datosRegister.username(), datosRegister.password())
+         , response );
 
-        return  ResponseEntity.status(HttpStatus.CREATED).body(authUsuario);
+        return  ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
     }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public void setCookieToken(String token, HttpServletResponse response) {
+        // Crear la cookie
+        Cookie cookie = new Cookie("acces_token", token);
+        // Configurar la cookie
+        cookie.setHttpOnly(true); // Hace que la cookie no sea accesible por JavaScript
+        cookie.setSecure(true); // Solo se envía por HTTPS
+        cookie.setMaxAge(3600); // Duración en segundos (1 hora en este caso)
+        cookie.setPath("/"); // La cookie es válida para todo el sitio
+        // Añadir la cookie a la respuesta
+        response.addCookie(cookie);
+    }
 
 }

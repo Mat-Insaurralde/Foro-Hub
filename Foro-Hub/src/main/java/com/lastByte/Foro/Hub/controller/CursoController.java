@@ -39,6 +39,9 @@ public class CursoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response) ;
     }
 
+
+
+
    //DELETE REAL
     @DeleteMapping("/{id}")
     @Transactional

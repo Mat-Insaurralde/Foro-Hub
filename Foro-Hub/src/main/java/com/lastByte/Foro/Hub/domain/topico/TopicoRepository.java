@@ -34,14 +34,22 @@ public interface TopicoRepository  extends JpaRepository<Topico,Long> {
 
 
     @Query( value = """  
-                        SELECT t.* 
-                        FROM topico_cursos tc
+                        SELECT t.id , t.titulo , t.mensaje, t.fecha_de_creacion , t.status , t.autor_id FROM topico_cursos tc
                         JOIN cursos c ON tc.curso_id = c.id
                         JOIN topicos t ON tc.topico_id = t.id
                         WHERE c.nombre = :nombre
                         AND YEAR(t.fecha_de_creacion) = :anio ;"""  ,  nativeQuery = true)
     Page<Topico> findByCursosPorNombreYanio( String nombre , Integer anio, Pageable paginacion );
 
+
+   /* @Query(value = """
+            SELECT t.id , t.titulo , t.mensaje, t.fecha_de_creacion , t.status , t.autor_id  , c.id, c.nombre , c.descripcion , c.fecha_de_creacion , c.status
+                        FROM topicos t
+                        JOIN topico_cursos tc ON t.id = tc.topico_id
+                        JOIN cursos c ON tc.curso_id = c.id
+                        WHERE t.id = :id;
+            """ ,  nativeQuery = true)
+    TopicoConSusCursosDTO findByTopicoConSusCursos(Long id);*/
 
 
 }

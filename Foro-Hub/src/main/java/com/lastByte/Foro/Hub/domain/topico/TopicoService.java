@@ -51,8 +51,8 @@ public class TopicoService {
         }
 
         //BUSCAMOS EL USUARIO PARA GUARDARLO COMO EL AUTOR DEL TOPICO
-        var usuario = (Usuario) usuarioRepository.findByUsername(username);
-
+        var usuario = usuarioRepository.findByUsername(username).get();
+//VERIFICAR
         if (usuario == null) {
             throw new ValidacionDeIntegridad("Debe registrarse o loguearse!");
         }

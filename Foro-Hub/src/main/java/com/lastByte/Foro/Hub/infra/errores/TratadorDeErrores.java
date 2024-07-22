@@ -1,19 +1,22 @@
 package com.lastByte.Foro.Hub.infra.errores;
 
 
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.lastByte.Foro.Hub.infra.excepciones.CollectionEmptyException;
 import com.lastByte.Foro.Hub.infra.excepciones.ResourceNotFoundException;
-import com.lastByte.Foro.Hub.infra.excepciones.TokenVerificationException;
 import com.lastByte.Foro.Hub.infra.excepciones.ValidacionDeIntegridad;
 import jakarta.validation.ValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice  //Intercepta las llamadas en caso ocurra una excepcion
 public class TratadorDeErrores {
-   // ValidacionDeIntegridad: Es más específica y se puede usar para situaciones donde hay una
+    // ValidacionDeIntegridad: Es más específica y se puede usar para situaciones donde hay una
     // violación de las reglas de integridad, como duplicados, relaciones entre entidades, etc.
 
     // ValidationException: Es más general y se puede usar para cualquier tipo de error de validación
@@ -27,7 +30,7 @@ public class TratadorDeErrores {
     }
 
     ///RESPONSE DE COLLECTION VACIA EXCEPTION
-   @ExceptionHandler(CollectionEmptyException.class)
+    @ExceptionHandler(CollectionEmptyException.class)
     public ResponseEntity collectionEmptyException(Exception e) {
         return ResponseEntity.ok().body(e.getMessage());
     }
@@ -39,11 +42,21 @@ public class TratadorDeErrores {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 
+
+
     ///RESPONSE VERIFICACION DE TOKEN EXCEPTION
-    @ExceptionHandler(TokenVerificationException.class)
-    public ResponseEntity<String> handleTokenVerificationException(TokenVerificationException ex) {
+    @ExceptionHandler(value = JWTVerificationException.class)
+    public ResponseEntity handleTokenVerificationException(JWTVerificationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
+
+    ///RESPONSE ERROR CREACION DE TOKEN EXCEPTION
+    @ExceptionHandler(value = JWTCreationException.class)
+    public ResponseEntity handleTokenCreationException(JWTCreationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+
 
     //RESPONSE RECURSO NO ENCONTRADO
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -51,5 +64,17 @@ public class TratadorDeErrores {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
+
+    //RESPONSE USERNAME O CONTRASEÑA INVALIDA
+    @ExceptionHandler(value = BadCredentialsException.class)
+    public ResponseEntity handleBadCredentialsException(BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
+
+    //RESPONSE USERNAME NOT FOUND
+    @ExceptionHandler(value = UsernameNotFoundException.class)
+    public ResponseEntity handleUsernameNotFoundException(UsernameNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
 
 }

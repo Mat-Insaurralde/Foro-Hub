@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -16,11 +18,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration  //Spring escanea primero al ser una configuracion
 @EnableWebSecurity //indica que vamos a sobreescribir el metodo de autenticacion con el que queremos
-public class SecurityConfigurations {
+public class SecurityConfig {
 
 
     @Autowired
-    private SecurityFilter securityFilter;
+    private JwtTokenValidatorFilter tokenValidatorFilter;
 
 
     @Bean
@@ -29,18 +31,37 @@ public class SecurityConfigurations {
                 //lo deshabilito porque vamos a usar aut token
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST,"/login").permitAll() //Permite a tods ingresar al POST /login
-                        .requestMatchers(HttpMethod.POST,"/register").permitAll() //Permite a tods ingresar al POST /login
+                        .requestMatchers(HttpMethod.POST,"/auth/**").permitAll() //Permite  ingresar a los POST /auth
+                        .requestMatchers(HttpMethod.GET , "/topicos/**").hasAnyRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET , "/cursos/**").hasAnyAuthority("READ")
+
                         .requestMatchers("/swagger-ui.html","/v3/api-docs/**","/swagger-ui/**").permitAll()
+
+
                         .anyRequest()
-                        .authenticated()) //Todos los demas request deben ser autenticados
-                /*Agrega mi filtro antes de que lanze su filtro*/
-                .addFilterBefore(securityFilter,
+                        .denyAll()) //Es un poco mas seguro que authenticated
+                        //.authenticated()) //Todos los demas request deben ser autenticados
+                //Agrega mi filtro antes de que lanze su filtro
+                .addFilterBefore(tokenValidatorFilter,
                         UsernamePasswordAuthenticationFilter.class )//Valida que el usuario tenga una sesion iniciada
                 .build();
     }
 
 
+   //Autentication Manager
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+   ///Proveedor  de la autenticacion // Con este provider podemos conectarnos a una BD //POdemos usar otro provider para authh2
+   @Bean
+   public AuthenticationProvider authenticationProvider(UserDetailsServiceImpl detailsService){
+       DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+       provider.setPasswordEncoder(passwordEncoder());
+       provider.setUserDetailsService(detailsService);
+       return provider;
+   }
 
 
 
@@ -49,9 +70,5 @@ public class SecurityConfigurations {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
 
 }

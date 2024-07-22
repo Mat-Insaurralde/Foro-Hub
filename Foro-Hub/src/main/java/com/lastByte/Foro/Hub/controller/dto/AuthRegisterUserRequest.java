@@ -1,8 +1,9 @@
-package com.lastByte.Foro.Hub.domain.usuario;
+package com.lastByte.Foro.Hub.controller.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
-public record RequestRegistroUsuarioDTO(
+public record AuthRegisterUserRequest(
         @NotBlank(message = "El nombre de usuario es obligatorio")
         String nombre,
         @NotBlank(message = "El email es obligatorio")
@@ -10,6 +11,8 @@ public record RequestRegistroUsuarioDTO(
         @NotBlank(message = "El username del usuario es obligatorio")
         String username,
         @NotBlank(message = "La contraseña es obligatoria")
-        String password
+        String password,
+        @Valid
+        AuthCreateRoleRequest roleRequest
 ) {
 }
