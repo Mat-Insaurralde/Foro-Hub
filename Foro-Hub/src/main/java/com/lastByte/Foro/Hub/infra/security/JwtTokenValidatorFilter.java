@@ -1,7 +1,9 @@
 package com.lastByte.Foro.Hub.infra.security;
 
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.lastByte.Foro.Hub.Utils.JwtUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lastByte.Foro.Hub.presentation.dto.auth.AuthResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -24,8 +26,17 @@ import java.util.Collection;
 @Component
 public class JwtTokenValidatorFilter extends OncePerRequestFilter {
 
+
+    private final JwtUtils jwtUtils;
+
+    private final ObjectMapper objectMapper;
+
+
     @Autowired
-    private JwtUtils jwtUtils;
+    public JwtTokenValidatorFilter(ObjectMapper objectMapper , JwtUtils jwtUtils) {
+      this.jwtUtils = jwtUtils;
+        this.objectMapper = objectMapper;
+    }
 
 
     @Override
@@ -35,31 +46,45 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
 
         String jwtToken = extractTokenFromCookie(request);
 
-        if (jwtToken != null) {
-            jwtToken = jwtToken.replace("Bearer ", ""); //Quitamos el bearer
 
-            DecodedJWT decodedJWT = jwtUtils.validateToken(jwtToken);
+        try {
 
-            String username = jwtUtils.extractUsername(decodedJWT);
 
-            String stringAuthorities = jwtUtils.getSpecificClaim( decodedJWT,"authorities").asString();
+            if (jwtToken != null) {
+                jwtToken = jwtToken.replace("Bearer ", ""); //Quitamos el bearer
 
-            Collection<? extends GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(stringAuthorities);
+                DecodedJWT decodedJWT = jwtUtils.validateToken(jwtToken);
 
-            SecurityContext context = SecurityContextHolder.getContext();
-            Authentication authentication = new UsernamePasswordAuthenticationToken(username,null,authorities);
-            context.setAuthentication(authentication);
-            SecurityContextHolder.setContext(context);
+                String username = jwtUtils.extractUsername(decodedJWT);
 
+                String stringAuthorities = jwtUtils.getSpecificClaim(decodedJWT, "authorities").asString();
+
+                Collection<? extends GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(stringAuthorities);
+
+                SecurityContext context = SecurityContextHolder.getContext();
+                Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+                context.setAuthentication(authentication);
+                SecurityContextHolder.setContext(context);
+            }
+
+        } catch (JWTVerificationException e) {
+            logger.error("Error de verificación JWT: " + e.getMessage());
+
+            // Limpiar el contexto de seguridad
+            SecurityContextHolder.clearContext();
+
+            // Establecer un estado de error en la respuesta
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write(objectMapper.writeValueAsString(new AuthResponse("","Token Invalido!",false)));
+
+            return;
         }
+
 
         filterChain.doFilter(request, response);
 
     }
-
-
-
-
 
 
     private String extractTokenFromCookie(HttpServletRequest request) {

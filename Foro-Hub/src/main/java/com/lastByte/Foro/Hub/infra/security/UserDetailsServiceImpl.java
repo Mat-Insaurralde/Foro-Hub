@@ -1,15 +1,13 @@
 package com.lastByte.Foro.Hub.infra.security;
 
-import com.lastByte.Foro.Hub.Utils.JwtUtils;
-import com.lastByte.Foro.Hub.controller.dto.AuthLoginRequest;
-import com.lastByte.Foro.Hub.controller.dto.AuthRegisterUserRequest;
-import com.lastByte.Foro.Hub.controller.dto.AuthResponse;
-import com.lastByte.Foro.Hub.domain.usuario.Roles.Role;
-import com.lastByte.Foro.Hub.domain.usuario.Roles.RoleRepository;
-import com.lastByte.Foro.Hub.domain.usuario.Usuario;
-import com.lastByte.Foro.Hub.domain.usuario.UsuarioRepository;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import com.lastByte.Foro.Hub.infra.exceptions.CollectionEmptyException;
+import com.lastByte.Foro.Hub.presentation.dto.auth.AuthLoginRequest;
+import com.lastByte.Foro.Hub.presentation.dto.auth.AuthRegisterUserRequest;
+import com.lastByte.Foro.Hub.presentation.dto.auth.AuthResponse;
+import com.lastByte.Foro.Hub.domain.Role.Role;
+import com.lastByte.Foro.Hub.domain.Role.RoleRepository;
+import com.lastByte.Foro.Hub.domain.Usuario.Usuario;
+import com.lastByte.Foro.Hub.domain.Usuario.UsuarioRepository;
 import jakarta.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -29,17 +27,28 @@ import java.util.stream.Collectors;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+
+    private final PasswordEncoder passwordEncoder;
+
+    private final UsuarioRepository usuarioRepository;
+
+    private final RoleRepository roleRepository;
+
+
+    private final JwtUtils jwtUtils;
+
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    public UserDetailsServiceImpl(PasswordEncoder passwordEncoder,
+                         UsuarioRepository usuarioRepository,
+                         RoleRepository roleRepository,
+                         JwtUtils jwtUtils) {
+        this.passwordEncoder = passwordEncoder;
+        this.usuarioRepository = usuarioRepository;
+        this.roleRepository = roleRepository;
+        this.jwtUtils = jwtUtils;
+    }
 
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private JwtUtils jwtUtils;
 
 
     @Override
@@ -82,7 +91,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
          Set<Role> rolesSet = roleRepository.findRoleEntitiesByRoleEnumIn(roleRequest).stream().collect(Collectors.toSet());
 
          if (rolesSet.isEmpty()){
-             throw new ValidationException("Los roles especificados no existen");
+             throw new CollectionEmptyException("Los roles especificados no existen");
          }
 
         var usuario = new Usuario(rolesSet,registerUserRequest, passwordEncoder.encode(registerUserRequest.password()));
